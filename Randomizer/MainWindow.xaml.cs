@@ -558,7 +558,7 @@ namespace Clean_Randomizer
             }
             for (int i = 0; i < patchedPortraits.Count; i++)
             {
-                byte[] compressedPortrait = DataCompression.CompressPortrait(patchedPortraits[i].data);
+                byte[] compressedPortrait = DataCompression.CompressNatsumeGBA(patchedPortraits[i].data);
                 memoryPatcher.PatchMemoryAndStoreAddress(compressedPortrait, (uint)(0x3afea8 + (patchedPortraits[i].metadata[0] * 9 + patchedPortraits[i].metadata[1]) * 4));
                 memoryPatcher.PatchMemoryAndStoreAddress(patchedPortraits[i].palette, (uint)(0x3b1768 + patchedPortraits[i].metadata[0] * 4));
             }
@@ -573,7 +573,7 @@ namespace Clean_Randomizer
             }
             for (int i = 0; i < patchedSprites.Count; i++)
             {
-                byte[] compressedSprite = DataCompression.CompressSprite(patchedSprites[i].data);
+                byte[] compressedSprite = DataCompression.CompressLZ77(patchedSprites[i].data);
                 memoryPatcher.PatchMemoryAndStoreAddress(compressedSprite, (uint)(0x3f7ea0 + patchedSprites[i].metadata[0] * 4));
                 memoryPatcher.PatchMemoryAndStoreAddress(patchedSprites[i].palette, (uint)(0x3f83e0 + patchedSprites[i].metadata[0] * 4));
             }
