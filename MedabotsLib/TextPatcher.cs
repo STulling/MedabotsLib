@@ -38,14 +38,14 @@ namespace MedabotsLib
         {
             foreach (KeyValuePair<(int, int), (byte[], int)> entry in storedMessages)
             {
-                int originalTextPointer = findPointer(entry.Key);
-                Utils.WriteInt(file, (uint)originalTextPointer, (uint)entry.Value.Item2 + 0x8000000);
+                int originalTextPointer = getAddress(entry.Key);
+                Game.GetInstance().Write(originalTextPointer, entry.Value.Item2 + 0x08000000);
             }
         }
 
-        private int findPointer((int, int) id)
+        private int getAddress((int, int) id)
         {
-            int subAdress = Utils.GetAdressAtPosition(file, this.offset + 4 * id.Item1);
+            int subAdress = Game.GetInstance().ReadLocalAddress(this.offset + 4 * id.Item1);
             int actualAdress = subAdress + 4 * id.Item2;
             return actualAdress;
         }

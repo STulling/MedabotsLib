@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 namespace GBALib
 {
     public static class Utils
     {
-        // Return a byte array as a sequence of hex values.
         public static string BytesToString(byte[] bytes)
         {
             string result = "";
@@ -16,7 +16,6 @@ namespace GBALib
             return result;
         }
 
-        // Compute the file's hash.
         public static byte[] GetHashSha256(string filename)
         {
             SHA256 Sha256 = SHA256.Create();
@@ -26,77 +25,49 @@ namespace GBALib
             }
         }
 
-        public static void WriteShort(byte[] bytes, uint offset, ushort opcode)
+        public static bool IsAddress(int address)
         {
-            byte[] bytez = BitConverter.GetBytes(opcode);
-            bytes[offset] = bytez[0];
-            bytes[offset + 1] = bytez[1];
+            int norm = address - 0x08000000;
+            return norm > 0 && norm < 0x7fffff;
         }
 
-        public static void WritePatches(byte[] bytes, Dictionary<uint, ushort> codePatches)
+        public static void Write<T>(byte[] bytes, int offset, T opcode)
         {
-            foreach (KeyValuePair<uint, ushort> entry in codePatches)
+            byte[] result = (byte[])typeof(BitConverter).GetMethod("GetBytes", new[] { typeof(T) })
+                .Invoke(null, new object[] { opcode });
+            for (int i = 0; i < result.Length; i++)
             {
-                WriteShort(bytes, entry.Key, entry.Value);
+                bytes[offset + i] = result[i];
             }
         }
 
-        public static void WriteInt(byte[] bytes, uint offset, uint opcode)
+        public static T FromBytes<T>(byte[] bytes)
         {
-            byte[] bytez = BitConverter.GetBytes(opcode);
-            bytes[offset] = bytez[0];
-            bytes[offset + 1] = bytez[1];
-            bytes[offset + 2] = bytez[2];
-            bytes[offset + 3] = bytez[3];
+            GCHandle gcHandle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+            T obj = (T)Marshal.PtrToStructure(gcHandle.AddrOfPinnedObject(), typeof(T));
+            gcHandle.Free();
+            return obj;
         }
 
-        public static void WritePayload(byte[] bytes, uint offset, uint[] payload)
+        public static T Read<T>(byte[] file, int offset)
         {
-            for (uint i = 0; i < payload.Length; i++)
-            {
-                WriteInt(bytes, offset + 4 * i, payload[i]);
-            }
+            int size = Marshal.SizeOf(default(T));
+            byte[] slice = new byte[size];
+            Array.Copy(file, offset, slice, 0, size);
+            return FromBytes<T>(slice);
         }
 
-        public static void WritePayload(byte[] bytes, uint offset, ushort[] payload)
+        public static void WritePayload<T>(byte[] bytes, int offset, T[] payload)
         {
-            for (uint i = 0; i < payload.Length; i++)
+            for (int i = 0; i < payload.Length; i++)
             {
-                WriteShort(bytes, offset + 2 * i, payload[i]);
-            }
-        }
-
-        public static void WritePayload(byte[] bytes, uint offset, byte[] payload)
-        {
-            for (uint i = 0; i < payload.Length; i++)
-            {
-                bytes[offset + i] =  payload[i];
+                Write(bytes, offset + Marshal.SizeOf(default(T)) * i, payload[i]);
             }
         }
 
         public static string GetHash(string filename)
         {
             return BytesToString(GetHashSha256(filename));
-        }
-
-        public static int GetAdressAtPosition(byte[] bytes, int address)
-        {
-            int new_address = 0;
-            new_address += (bytes[address + 3] << 24);
-            new_address += (bytes[address + 2] << 16);
-            new_address += (bytes[address + 1] << 8);
-            new_address += bytes[address];
-            return new_address - 0x08000000;
-        }
-
-        public static int GetIntAtPosition(byte[] bytes, int address)
-        {
-            int read_int = 0;
-            read_int += (bytes[address + 3] << 24);
-            read_int += (bytes[address + 2] << 16);
-            read_int += (bytes[address + 1] << 8);
-            read_int += bytes[address];
-            return read_int;
         }
 
         public static void Shuffle<T>(IList<T> list)
@@ -111,6 +82,11 @@ namespace GBALib
                 list[k] = list[n];
                 list[n] = value;
             }
+        }
+
+        public static int ToLocal(int address)
+        {
+            return address - 0x08000000;
         }
 
         public static int Search(byte[] haystack, byte[] needle)
