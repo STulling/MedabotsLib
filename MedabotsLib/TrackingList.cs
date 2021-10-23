@@ -10,23 +10,20 @@ namespace MedabotsLib
 {
     public class TrackingList<T> : IList<T>
     {
-        List<T> original;
-        Dictionary<int, T> replacement;
+        internal List<T> original;
+        internal Dictionary<int, T> replacement;
         List<T> applied;
-        int offset;
         bool locked;
 
-        public TrackingList(List<T> list, int offset)
+        public TrackingList(List<T> list)
         {
             this.original = list;
-            this.offset = offset;
             this.locked = true;
         }
 
-        public TrackingList(int offset)
+        public TrackingList()
         {
             this.original = new List<T>();
-            this.offset = offset;
             this.locked = false;
         }
 

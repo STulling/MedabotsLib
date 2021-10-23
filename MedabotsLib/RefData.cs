@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MedabotsLib
 {
-    struct RefData
+    public struct RefData
     {
         public int backref;
         public byte[] data;
