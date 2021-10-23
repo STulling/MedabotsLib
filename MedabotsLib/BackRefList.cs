@@ -8,22 +8,30 @@ using System.Threading.Tasks;
 
 namespace MedabotsLib
 {
-    public class BackRefList<T> : TrackingList<T> where T : IByteable
+    public class BackRefList<T> : TrackingList<T>, ITypedList<T> where T : Byteable
     {
         int offset;
+        public Type ListType { get; }
 
-        public BackRefList(List<T> list, int offset)
+        public BackRefList(List<T> list, int offset, Type type)
         {
             this.original = list;
             this.offset = offset;
+            this.ListType = type;
+            this.Lock();
         }
 
-        public List<RefData> ToBackRefs()
+        public Type GetListType()
         {
-            List<RefData> result = new List<RefData>();
+            return ListType;
+        }
+
+        public List<BackRef> ToBackRefs()
+        {
+            List<BackRef> result = new List<BackRef>();
             foreach (KeyValuePair<int, T> item in this.replacement)
             {
-                result.Add(new RefData(this.offset + item.Key, item.Value.ToBytes()));
+                result.Add(new BackRef(this.offset + item.Key, item.Value.ToBytes()));
             }
             return result;
         }

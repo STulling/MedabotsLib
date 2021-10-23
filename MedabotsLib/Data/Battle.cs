@@ -5,7 +5,7 @@ namespace MedabotsLib.Data
 {
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public class Battle
+    public class Battle : Byteable
     {
         public byte characterId;
         public byte unknown_1;

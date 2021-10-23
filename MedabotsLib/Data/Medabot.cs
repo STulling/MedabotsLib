@@ -7,7 +7,7 @@ using static MedabotsLib.IdTranslator;
 namespace MedabotsLib.Data
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct Medabot
+    public struct Medabot : Byteable
     {
         public byte unknown;
         public byte head;

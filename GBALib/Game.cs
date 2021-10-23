@@ -33,7 +33,7 @@ namespace GBALib
         {
             if (_instance == null)
             {
-                _instance = new Game();
+                throw new Exception("Create the game first.");
             }
             return _instance;
         }

@@ -1,4 +1,5 @@
 ﻿using GBALib;
+using MedabotsLib.Data;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,14 +11,13 @@ namespace MedabotsLib
 {
     class TextExtract
     {
-        public static List<string> Extract(int offset, int numEntries = 0)
+        public static List<Text> Extract(int offset, int numEntries = 0)
         {
-            List<string> result = new List<string>();
+            List<Text> result = new List<Text>();
             foreach (int strOffset in Game.GetInstance().GetPtrTable(offset, numEntries))
             {
-                byte[] encoded = Game.GetInstance().ReadUntil(strOffset, (byte)0xFE);
-                string decoded = Encoding.Decode(encoded);
-                result.Add(decoded);
+                byte[] encoded = Game.GetInstance().ReadUntil(strOffset, (byte)0xFE, inclusive: true);
+                result.Add(new Text(encoded));
             }
             return result;
         }

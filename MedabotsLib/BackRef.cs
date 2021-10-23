@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace MedabotsLib
 {
-    public struct RefData
+    public struct BackRef
     {
         public int backref;
         public byte[] data;
 
-        public RefData(int backref, byte[] data) : this()
+        public BackRef(int backref, byte[] data) : this()
         {
             this.backref = backref;
             this.data = data;

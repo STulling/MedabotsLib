@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace MedabotsLib
 {
-    public static class MedabotData
+    public interface ITypedList<T> : IList<T>
     {
-        public static List<string> CharacterNames;
+        public Type ListType { get; }
     }
 }

@@ -12,7 +12,7 @@ namespace MedabotsLib.Data
         public byte medal_compatibility;
         public byte legtype;
         public Speciality speciality;
-        public Gender gender;
+        public new Gender gender;
         public byte armor;
         public byte propulsion;
         public byte evasion;

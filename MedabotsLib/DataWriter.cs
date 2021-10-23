@@ -1,4 +1,5 @@
 ﻿using GBALib;
+using MedabotsLib.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,31 +11,41 @@ namespace MedabotsLib
     class DataWriter
     {
         int offset;
-        List<RefData> data;
 
         public DataWriter(int startOffset)
         {
             this.offset = startOffset;
-            this.data = new List<RefData>();
-        }
-
-        public void Add(RefData refData)
-        {
-            data.Add(refData);
-        }
-
-        public void Add(int refAddress, byte[] stuff)
-        {
-            data.Add(new RefData(refAddress, stuff));
         }
 
         public void Write()
         {
-            foreach (RefData refData in data) 
+            foreach (IList<Byteable> list in GameData.Data) 
             {
-                Game.GetInstance().Write(this.offset, refData.data);
-                Game.GetInstance().Write(refData.backref, this.offset);
-                this.offset += refData.data.Length;
+                if (list.GetType() == typeof(OffsetList<Byteable>))
+                {
+                    OffsetList<Byteable> offList = list as OffsetList<Byteable>;
+                    int offset = offList.offset;
+                    foreach (Byteable byteable in offList)
+                    {
+                        byte[] data = byteable.ToBytes();
+                        Game.GetInstance().Write(offset, data);
+                        offset += data.Length;
+                    }
+                }
+                else if (list.GetType() == typeof(BackRefList<Byteable>))
+                {
+                    BackRefList<Byteable> refList = list as BackRefList<Byteable>;
+                    foreach (BackRef bref in refList.ToBackRefs())
+                    {
+                        Game.GetInstance().Write(this.offset, bref.data);
+                        Game.GetInstance().Write(bref.backref, this.offset);
+                        this.offset += bref.data.Length;
+                    }
+                }
+                else
+                {
+                    throw new Exception("Unknown list type");
+                }
             }
         }
     }
