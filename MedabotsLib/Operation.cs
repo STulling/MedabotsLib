@@ -38,7 +38,7 @@ namespace MedabotsLib
             if (name == "Show_Message_A" || name == "Show_Message_B")
                 comment = TextParser.instance.origMessages[((int)args.Item2[0], (int)args.Item2[1])];
             if (name == "Warp_A" || name == "Warp_B")
-                comment = IdTranslator.IdToMap((byte)args.Item2[0]);
+                comment = "IDK BRO";// IdTranslator.IdToMap((byte)args.Item2[0]);
             if (name == "Play_Music" || name == "Play_Persistent_Music")
                 if ((byte)args.Item2[0] <= 51)
                     comment = IdTranslator.song_names[(byte)args.Item2[0] - 1];

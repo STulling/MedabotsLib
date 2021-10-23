@@ -8,16 +8,14 @@ using System.Threading.Tasks;
 
 namespace MedabotsLib
 {
-    public class OffsetList<T> : ITypedList<T> where T : Byteable
+    public class OffsetList<T> : IList<T> where T : IByteable
     {
         public int offset;
-        List<T> list;
-        public Type ListType { get; }
-        public OffsetList(List<T> list, int offset, Type type)
+        public List<T> list;
+        public OffsetList(List<T> list, int offset)
         {
             this.list = list;
             this.offset = offset;
-            this.ListType = type;
         }
 
         public T this[int index] { get => list[index]; set => list[index] = value; }

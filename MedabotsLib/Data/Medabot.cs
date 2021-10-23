@@ -7,14 +7,14 @@ using static MedabotsLib.IdTranslator;
 namespace MedabotsLib.Data
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct Medabot : Byteable
+    public struct Medabot : IByteable
     {
         public byte unknown;
         public byte head;
         public byte right_arm;
         public byte left_arm;
         public byte legs;
-        public Medal_Id medal;
+        public byte medal;
         public byte medal_level;
         public byte unknown1;
         public byte unknown2;

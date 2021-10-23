@@ -13,12 +13,14 @@ namespace MedabotsLib
         Dictionary<(int, int), string> messages;
         byte[] file;
         int offset;
+        public static TextParser instance;
         public TextParser(byte[] file, int offset)
         {
             this.file = file;
             this.offset = offset;
             messages = new Dictionary<(int, int), string>();
             origMessages = parseAll();
+            instance = this;
         }
         public Dictionary<(int, int), byte[]> getEncodedMessages()
         {
@@ -42,11 +44,11 @@ namespace MedabotsLib
             int amount_of_ptrs = 15;
             for (int i = 0; i <= amount_of_ptrs; i++)
             {
-                int textPtrOffset = Utils.GetAdressAtPosition(file, this.offset + 4 * i);
+                int textPtrOffset = Game.GetInstance().ReadLocalAddress(this.offset + 4 * i);
                 int j = 0;
                 while (true)
                 {
-                    int textOffset = Utils.GetAdressAtPosition(file, textPtrOffset + 4 * j);
+                    int textOffset = Game.GetInstance().ReadLocalAddress(textPtrOffset + 4 * j);
                     if (textOffset == -0x08000000) break;
                     textAdresses.Add((i, j), parseBytes(textOffset));
                     j++;

@@ -7,12 +7,12 @@ using static MedabotsLib.IdTranslator;
 namespace MedabotsLib.Data
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public class Arm : Part
+    public struct Arm : IByteable
     {
         public byte medal_compatibility;
         public Technique technique;
         public Speciality speciality;
-        public new Gender gender;
+        public Gender gender;
         public byte armor;
         public byte RoS;
         public byte power;

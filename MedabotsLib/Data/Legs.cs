@@ -7,7 +7,7 @@ using static MedabotsLib.IdTranslator;
 namespace MedabotsLib.Data
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public class Legs : Part
+    public struct Legs : IByteable
     {
         public byte medal_compatibility;
         public byte legtype;

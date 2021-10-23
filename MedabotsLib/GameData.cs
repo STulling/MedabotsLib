@@ -9,39 +9,77 @@ using System.Threading.Tasks;
 
 namespace MedabotsLib
 {
-    struct StructInfo
-    {
-        public Type type;
-        public int address;
-        public int count;
-
-        public StructInfo(Type type, int address, int count)
-        {
-            this.type = type;
-            this.address = address;
-            this.count = count;
-        }
-    }
     public static class GameData
     {
-        public static BackRefList<Text> MedalNames = GetROMTextData(0x3b65b0);
-        public static OffsetList<Battle> Battles = GetROMStructData<Battle>(0x3c1a00, 20);
+        public static BackRefList<Text> MedalNames;
+        public static BackRefList<Text> BotNames;
+        public static BackRefList<Text> PartNames;
+        public static BackRefList<Text> PreBattleMessage;
+        public static BackRefList<Text> PostBattleMessage;
+        public static BackRefList<Text> CharacterNames;
+        public static BackRefList<Text> Messages;
+        public static OffsetList<Battle> Battles;
 
-        public static List<IList<Byteable>> Data = new List<IList<Byteable>> {
-            MedalNames.Cast<Byteable>().ToList(),
-            Battles.Cast<Byteable>().ToList()
-        };
+        public static List<IList<IByteable>> Data;
+
+        public static void LoadAll()
+        {
+            MedalNames = GetROMTextData(0x3b65b0);
+            BotNames = GetROMTextData(0x3ba678);
+            PreBattleMessage = GetROMTextData(0x3c2d5c);
+            PostBattleMessage = GetROMTextData(0x3c3b24);
+            CharacterNames = GetROMTextData(0x3c40d8);
+            PartNames = GetROMTextData(0x3bbb6c);
+            Battles = GetROMStructData<Battle>(0x3c1ba0, 20);
+            Messages = GetAllMessages();
+            
+
+            Data = new List<IList<IByteable>> {
+                MedalNames.Cast<IByteable>().ToList(),
+                BotNames.Cast<IByteable>().ToList(),
+                Messages.Cast<IByteable>().ToList(),
+                Battles.Cast<IByteable>().ToList(),
+                PartNames.Cast<IByteable>().ToList(),
+                PreBattleMessage.Cast<IByteable>().ToList(),
+                PostBattleMessage.Cast<IByteable>().ToList(),
+                CharacterNames.Cast<IByteable>().ToList()
+            };
+        }
+
+        private static BackRefList<Text> GetAllMessages()
+        {
+            int amount_of_ptrs = 16;
+            int[] addresses = new int[amount_of_ptrs];
+            for (int i = 0; i < amount_of_ptrs; i++)
+            {
+                Console.WriteLine(0x47e45c + 4 * i);
+                addresses[i] = Game.GetInstance().ReadLocalAddress(0x47df44 + 4 * i);
+            }
+            return GetScatteredROMTextData(addresses);
+        }
 
         public static BackRefList<Text> GetROMTextData(int address)
         {
             List<Text> texts = TextExtract.Extract(address);
-            return new BackRefList<Text>(texts, address, typeof(Text));
+            return new SequentialBackRefList<Text>(texts, address);
         }
 
-        public static OffsetList<T> GetROMStructData<T>(int address, int count) where T : Byteable
+        public static BackRefList<Text> GetScatteredROMTextData(int[] addresses)
+        {
+            RandomAccessBackRefList<Text> res = new RandomAccessBackRefList<Text>();
+            foreach (int address in addresses)
+            {
+                List<Text> texts = TextExtract.Extract(address);
+                res.Merge(new SequentialBackRefList<Text>(texts, address).ToRandomAccess());
+            }
+            res.Lock();
+            return res;
+        }
+
+        public static OffsetList<T> GetROMStructData<T>(int address, int count) where T : IByteable
         {
             List<T> items = Game.GetInstance().ReadObjects<T>(address, count);
-            return new OffsetList<T>(items, address, typeof(T));
+            return new OffsetList<T>(items, address);
         }
     }
 }

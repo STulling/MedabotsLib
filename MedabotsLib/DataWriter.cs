@@ -17,24 +17,25 @@ namespace MedabotsLib
             this.offset = startOffset;
         }
 
-        public void Write()
+        public void Write(List<IList<IByteable>> allLists)
         {
-            foreach (IList<Byteable> list in GameData.Data) 
+            foreach (IList<IByteable> list in allLists) 
             {
-                if (list.GetType() == typeof(OffsetList<Byteable>))
+                if (list.GetType() == typeof(OffsetList<IByteable>))
                 {
-                    OffsetList<Byteable> offList = list as OffsetList<Byteable>;
+                    OffsetList<IByteable> offList = list as OffsetList<IByteable>;
                     int offset = offList.offset;
-                    foreach (Byteable byteable in offList)
+                    foreach (IByteable byteable in offList)
                     {
                         byte[] data = byteable.ToBytes();
                         Game.GetInstance().Write(offset, data);
                         offset += data.Length;
                     }
                 }
-                else if (list.GetType() == typeof(BackRefList<Byteable>))
+                else if (list.GetType() == typeof(BackRefList<IByteable>))
                 {
-                    BackRefList<Byteable> refList = list as BackRefList<Byteable>;
+                    BackRefList<IByteable> refList = list as BackRefList<IByteable>;
+                    refList.Verify();
                     foreach (BackRef bref in refList.ToBackRefs())
                     {
                         Game.GetInstance().Write(this.offset, bref.data);
@@ -44,7 +45,7 @@ namespace MedabotsLib
                 }
                 else
                 {
-                    throw new Exception("Unknown list type");
+                    throw new Exception("Incompatible list type");
                 }
             }
         }

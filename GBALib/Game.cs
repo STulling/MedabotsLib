@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -29,6 +30,21 @@ namespace GBALib
             }
         }
 
+        public static void Load(string filename)
+        {
+            if (_instance == null)
+            {
+                _instance = new Game
+                {
+                    ROM = File.ReadAllBytes(filename)
+                };
+            }
+            else
+            {
+                throw new Exception("Cannot load the ROM twice.");
+            }
+        }
+
         public static Game GetInstance()
         {
             if (_instance == null)
@@ -38,12 +54,12 @@ namespace GBALib
             return _instance;
         }
 
-        public T[] ReadUntil<T>(int offset, T trigger, bool inclusive = false)
+        public T[] ReadUntil<T>(int offset, T trigger, int getnext = 0)
         {
-            return ReadUntil(offset, new T[] { trigger }, inclusive);
+            return ReadUntil(offset, new T[] { trigger }, getnext);
         }
 
-        public T[] ReadUntil<T>(int offset, T[] trigger, bool inclusive = false)
+        public T[] ReadUntil<T>(int offset, T[] trigger, int getnext = 0)
         {
             int size = Marshal.SizeOf(default(T));
             int i = 0;
@@ -53,17 +69,19 @@ namespace GBALib
                 T item = Read<T>(offset + i * size);
                 if (trigger.Contains(item))
                 {
-                    if (inclusive)
+                    for (int j = 0; j < getnext; j++)
                     {
+                        item = Read<T>(offset + (i + j) * size);
                         result.Add(item);
                     }
                     return result.ToArray();
                 }
                 result.Add(item);
+                i++;
             }
         }
 
-        public List<int> GetPtrTable(int offset, int amount = 0)
+        public List<int> GetPtrTable(int offset, int amount = 0, bool local = true)
         {
             List<int> result = new List<int>();
             int i = 0;
@@ -74,7 +92,14 @@ namespace GBALib
                 {
                     break;
                 }
-                result.Add(address);
+                if (local)
+                {
+                    result.Add(Utils.ToLocal(address));
+                }
+                else
+                {
+                    result.Add(address);
+                }
                 i++;
             }
             return result;

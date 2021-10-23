@@ -10,42 +10,45 @@ namespace MedabotsLib
 {
     public class TrackingList<T> : IList<T>
     {
-        internal List<T> original;
-        internal Dictionary<int, T> replacement;
-        List<T> applied;
-        bool locked;
+        protected List<T> list;
+        protected Dictionary<int, T> changes;
+        protected bool locked = false;
 
         public TrackingList(List<T> list)
         {
-            this.original = list;
-            this.locked = true;
+            this.list = list;
+            this.changes = new Dictionary<int, T>();
+            this.Lock();
         }
 
         public TrackingList()
         {
-            this.original = new List<T>();
-            this.locked = false;
+            this.list = new List<T>();
+            this.changes = new Dictionary<int, T>();
         }
 
         public T this[int i]
         {
             get { 
-                return applied[i];
+                return list[i];
             }
             set { 
                 if (this.locked)
                 {
-                    replacement.Add(i, value);
-                    applied[i] = value;
+                    if (locked)
+                    {
+                        changes.Add(i, value);
+                    }
+                    list[i] = value;
                 }
                 else
                 {
-                    original[i] = value;
+                    list[i] = value;
                 }
             }
         }
 
-        public int Count => original.Count;
+        public int Count => list.Count;
 
         public bool IsReadOnly => false;
 
@@ -57,7 +60,7 @@ namespace MedabotsLib
             {
                 throw new Exception("Cannot add to locked TrackingList");
             }
-            this.original.Add(item);
+            this.list.Add(item);
         }
 
         public void Lock()
@@ -67,7 +70,7 @@ namespace MedabotsLib
                 throw new Exception("Cannot lock locked TrackingList again");
             }
             this.locked = true;
-            this.applied = new List<T>(this.original);
+            this.list = new List<T>(this.list);
         }
 
         public void Clear()
@@ -76,17 +79,17 @@ namespace MedabotsLib
             {
                 throw new Exception("Cannot clear locked TrackingList");
             }
-            this.original.Clear();
+            this.list.Clear();
         }
 
         public bool Contains(T item)
         {
-            return applied.Contains(item);
+            return list.Contains(item);
         }
 
         public void CopyTo(T[] array, int arrayIndex)
         {
-            applied.CopyTo(array, arrayIndex);
+            list.CopyTo(array, arrayIndex);
         }
 
         public IEnumerator<T> GetEnumerator()
@@ -96,7 +99,7 @@ namespace MedabotsLib
 
         public int IndexOf(T item)
         {
-            return applied.IndexOf(item);
+            return list.IndexOf(item);
         }
 
         public void Insert(int index, T item)
@@ -105,7 +108,7 @@ namespace MedabotsLib
             {
                 throw new Exception("Cannot insert into locked TrackingList");
             }
-            this.original.Insert(index, item);
+            this.list.Insert(index, item);
         }
 
         public bool Remove(T item)
@@ -114,7 +117,7 @@ namespace MedabotsLib
             {
                 throw new Exception("Cannot remove from locked TrackingList");
             }
-            return this.original.Remove(item);
+            return this.list.Remove(item);
         }
 
         public void RemoveAt(int index)
@@ -123,7 +126,7 @@ namespace MedabotsLib
             {
                 throw new Exception("Cannot remove at from locked TrackingList");
             }
-            this.original.RemoveAt(index);
+            this.list.RemoveAt(index);
         }
 
         IEnumerator IEnumerable.GetEnumerator()

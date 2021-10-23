@@ -6,37 +6,62 @@ using System.Threading.Tasks;
 
 namespace MedabotsLib.Data
 {
-    public class Text : Byteable
+    public class Text : IByteable, ICanGetDirty
     {
 
         string decoded;
+        string decodedCopy;
         byte[] encoded;
+        byte[] encodedCopy;
+        private bool isDirty = false;
 
         public Text(string text)
         {
             this.decoded = text;
             this.encoded = Encode(text);
+            this.isDirty = false;
+            initCopies();
         }
 
         public Text(byte[] data)
         {
             this.encoded = data;
             this.decoded = Decode(data);
+            this.isDirty = false;
+            initCopies();
+        }
+
+        private void initCopies()
+        {
+            this.decodedCopy = new string(decoded);
+            this.encodedCopy = new byte[encoded.Length];
+            this.encoded.CopyTo(encodedCopy, 0);
         }
 
         public string Str { get => decoded; set => Set(value); }
         public byte[] Enc { get => encoded; set => Set(value); }
 
+        public bool IsDirty
+        {
+            get
+            {
+                this.isDirty = !(decoded.Equals(decodedCopy) && encoded.SequenceEqual(encodedCopy));
+                return this.isDirty;
+            }
+        }
+
         public void Set(byte[] encodedData)
         {
             this.encoded = encodedData;
             this.decoded = Decode(encodedData);
+            this.isDirty = true;
         }
 
         public void Set(string decodedData)
         {
             this.decoded = decodedData;
             this.encoded = Encode(decodedData);
+            this.isDirty = true;
         }
 
         private static char[] encoding = new char[]
@@ -96,7 +121,7 @@ namespace MedabotsLib.Data
                 }
                 else if (chr == 0xfe)
                 {
-                    result += "<ENDLST>";
+                    result += "#";
                 }
                 else if (chr == 0xff)
                 {
@@ -120,6 +145,10 @@ namespace MedabotsLib.Data
                 if (encoding.Contains(chr))
                 {
                     result.Add((byte)Array.IndexOf(encoding, chr));
+                }
+                else if (chr == '#')
+                {
+                    result.Add((byte)0xFE);
                 }
                 else if (chr == '<')
                 {
@@ -177,7 +206,7 @@ namespace MedabotsLib.Data
             return result.ToArray();
         }
 
-        public override byte[] ToBytes()
+        public byte[] ToBytes()
         {
             return encoded;
         }
