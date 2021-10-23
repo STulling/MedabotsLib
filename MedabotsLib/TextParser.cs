@@ -13,14 +13,12 @@ namespace MedabotsLib
         Dictionary<(int, int), string> messages;
         byte[] file;
         int offset;
-        public static TextParser instance;
         public TextParser(byte[] file, int offset)
         {
             this.file = file;
             this.offset = offset;
             messages = new Dictionary<(int, int), string>();
             origMessages = parseAll();
-            instance = this;
         }
         public Dictionary<(int, int), byte[]> getEncodedMessages()
         {

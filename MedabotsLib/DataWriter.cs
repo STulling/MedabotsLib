@@ -11,7 +11,6 @@ namespace MedabotsLib
     {
         int offset;
         List<RefData> data;
-        bool wrote = false;
 
         public DataWriter(int startOffset)
         {
@@ -22,6 +21,11 @@ namespace MedabotsLib
         public void Add(RefData refData)
         {
             data.Add(refData);
+        }
+
+        public void Add(int refAddress, byte[] stuff)
+        {
+            data.Add(new RefData(refAddress, stuff));
         }
 
         public void Write()

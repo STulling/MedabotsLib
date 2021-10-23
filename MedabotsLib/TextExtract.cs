@@ -10,15 +10,16 @@ namespace MedabotsLib
 {
     class TextExtract
     {
-        public List<string> parseText(byte[] file, int offset, int numEntries = 0)
+        public static List<string> Extract(int offset, int numEntries = 0)
         {
-            bool autoHalt = (numEntries == 0);
-            int i = 0;
             List<string> result = new List<string>();
-            while (i < numEntries || autoHalt)
+            foreach (int strOffset in Game.GetInstance().GetPtrTable(offset, numEntries))
             {
-                Game.GetInstance().ReadAddress(offset + 4 * i);
+                byte[] encoded = Game.GetInstance().ReadUntil(strOffset, (byte)0xFE);
+                string decoded = Encoding.Decode(encoded);
+                result.Add(decoded);
             }
+            return result;
         }
     }
 }

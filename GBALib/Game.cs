@@ -38,6 +38,31 @@ namespace GBALib
             return _instance;
         }
 
+        public T[] ReadUntil<T>(int offset, T trigger, bool inclusive = false)
+        {
+            return ReadUntil(offset, new T[] { trigger }, inclusive);
+        }
+
+        public T[] ReadUntil<T>(int offset, T[] trigger, bool inclusive = false)
+        {
+            int size = Marshal.SizeOf(default(T));
+            int i = 0;
+            List<T> result = new List<T>();
+            while (true)
+            {
+                T item = Read<T>(offset + i * size);
+                if (trigger.Contains(item))
+                {
+                    if (inclusive)
+                    {
+                        result.Add(item);
+                    }
+                    return result.ToArray();
+                }
+                result.Add(item);
+            }
+        }
+
         public List<int> GetPtrTable(int offset, int amount = 0)
         {
             List<int> result = new List<int>();
@@ -70,9 +95,7 @@ namespace GBALib
                 {
                     address = offset + size * i;
                 }
-                byte[] slice = new byte[size];
-                Array.Copy(ROM, address, slice, 0, size);
-                result.Add(Utils.FromBytes<T>(slice));
+                result.Add(Utils.Read<T>(ROM, address));
             }
             return result;
         }

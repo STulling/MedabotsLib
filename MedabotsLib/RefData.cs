@@ -10,5 +10,11 @@ namespace MedabotsLib
     {
         public int backref;
         public byte[] data;
+
+        public RefData(int backref, byte[] data) : this()
+        {
+            this.backref = backref;
+            this.data = data;
+        }
     }
 }
