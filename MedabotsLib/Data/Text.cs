@@ -221,7 +221,9 @@ namespace MedabotsLib.Data
 
         public byte[] ToBytes()
         {
-            return encoded;
+            List<byte> bs = encoded.ToList();
+            bs.Add(0xFE);
+            return bs.ToArray();
         }
     }
 }

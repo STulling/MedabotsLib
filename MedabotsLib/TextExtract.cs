@@ -19,7 +19,7 @@ namespace MedabotsLib
                 byte[] encoded = Game.GetInstance().ReadUntil(strOffset, new byte[] { 0xFE, 0xFF }, getnext: 2);
                 if (encoded[encoded.Length-2] == 0xFE)
                 {
-                    encoded = encoded.SkipLast(1).ToArray();
+                    encoded = encoded.SkipLast(2).ToArray();
                 }
                 result.Add(new Text(encoded));
             }
