@@ -16,6 +16,7 @@ namespace Libtest
             GameData.MedalNames.Verify();
             Console.WriteLine(GameData.PreBattleMessage);
             Console.WriteLine(GameData.Messages[0]);
+            Console.WriteLine(GameData.Battles[100]);
         }
     }
 }

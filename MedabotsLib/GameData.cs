@@ -18,7 +18,7 @@ namespace MedabotsLib
         public static BackRefList<Text> PostBattleMessage;
         public static BackRefList<Text> CharacterNames;
         public static BackRefList<Text> Messages;
-        public static OffsetList<Battle> Battles;
+        public static OffsetList<BattleWrapper> Battles;
 
         public static List<IList<IByteable>> Data;
 
@@ -30,7 +30,7 @@ namespace MedabotsLib
             PostBattleMessage = GetROMTextData(0x3c3b24);
             CharacterNames = GetROMTextData(0x3c40d8);
             PartNames = GetROMTextData(0x3bbb6c);
-            Battles = GetROMStructData<Battle>(0x3c1ba0, 20);
+            Battles = GetROMStructData<BattleWrapper, Battle>(0x3c1ba0, 0xf5, is_ptr_table: true);
             Messages = GetAllMessages();
             
 
@@ -80,6 +80,17 @@ namespace MedabotsLib
         {
             List<T> items = Game.GetInstance().ReadObjects<T>(address, count);
             return new OffsetList<T>(items, address);
+        }
+
+        public static OffsetList<W> GetROMStructData<W, T>(int address, int count, bool is_ptr_table = false) where T : IByteable where W : BaseWrapper<T>
+        {
+            List<T> items = Game.GetInstance().ReadObjects<T>(address, count, is_ptr_table);
+            List<W> wrappers = new List<W>();
+            foreach (T item in items)
+            {
+                wrappers.Add(Activator.CreateInstance(typeof(W), new object[] { item }) as W);
+            }
+            return new OffsetList<W>(wrappers, address);
         }
     }
 }

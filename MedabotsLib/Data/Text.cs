@@ -206,6 +206,19 @@ namespace MedabotsLib.Data
             return result.ToArray();
         }
 
+        public override bool Equals(object other)
+        {
+            if (other.GetType() == typeof(string))
+            {
+                string otherString = other as string;
+                return otherString.Equals(this.Str);
+            }
+            else
+            {
+                return base.Equals(other);
+            }
+        }
+
         public byte[] ToBytes()
         {
             return encoded;

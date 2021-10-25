@@ -102,6 +102,15 @@ namespace MedabotsLib
             return list.IndexOf(item);
         }
 
+        public int IndexOf(object item)
+        {
+            for (int i = 0; i < this.Length; i++)
+            {
+                if (this[i].Equals(item)) return i;
+            }
+            return -1;
+        }
+
         public void Insert(int index, T item)
         {
             if (this.locked)
