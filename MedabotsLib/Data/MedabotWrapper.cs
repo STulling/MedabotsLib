@@ -8,7 +8,7 @@ namespace MedabotsLib.Data
 {
     public class MedabotWrapper : BaseWrapper<Medabot>
     {
-        public MedabotWrapper(Medabot data) : base(data) { }
+        public MedabotWrapper(int id, Medabot data) : base(id, data) { }
 
         public byte MedalLevel
         {

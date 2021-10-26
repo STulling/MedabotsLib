@@ -9,9 +9,11 @@ namespace MedabotsLib.Data
     public abstract class BaseWrapper<T> : IByteable where T : IByteable
     {
         protected T data;
+        protected int id;
 
-        protected BaseWrapper(T data)
+        protected BaseWrapper(int id, T data)
         {
+            this.id = id;
             this.data = data;
         }
 

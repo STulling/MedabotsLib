@@ -105,20 +105,20 @@ namespace GBALib
             return result;
         }
 
-        public List<T> ReadObjects<T>(int offset, int amount, bool is_ptr_array = false)
+        public List<T> ReadObjects<T>(int offset, int amount, int jump = 1, bool is_ptr_array = false)
         {
             List<T> result = new List<T>();
             int size = Marshal.SizeOf(default(T));
-            for (int i = 0; i <= amount; i++)
+            for (int i = 0; i < amount; i++)
             {
                 int address;
                 if (is_ptr_array)
                 {
-                    address = ReadLocalAddress(offset + 4 * i);
+                    address = ReadLocalAddress(offset + 4 * i * jump);
                 }
                 else
                 {
-                    address = offset + size * i;
+                    address = offset + size * i * jump;
                 }
                 result.Add(Utils.Read<T>(ROM, address));
             }

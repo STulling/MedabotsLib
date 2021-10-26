@@ -10,9 +10,9 @@ namespace MedabotsLib.Data
     public struct Head : IByteable
     {
         public byte medal_compatibility;
-        public Technique technique;
-        public Speciality speciality;
-        public Gender gender;
+        public byte technique;
+        public byte speciality;
+        public byte gender;
         public byte armor;
         public byte RoS;
         public byte power;

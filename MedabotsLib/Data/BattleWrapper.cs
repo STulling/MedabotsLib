@@ -9,11 +9,11 @@ namespace MedabotsLib.Data
     public class BattleWrapper : BaseWrapper<Battle>
     {
         private MedabotWrapper[] bots;
-        public BattleWrapper(Battle data) : base(data) {
+        public BattleWrapper(int id, Battle data) : base(id, data) {
             this.bots = new MedabotWrapper[data.number_of_bots];
             for (int i = 0; i < data.number_of_bots; i++)
             {
-                this.bots[i] = new MedabotWrapper(data.bots[i]);
+                this.bots[i] = new MedabotWrapper(i, data.bots[i]);
             }
         }
 

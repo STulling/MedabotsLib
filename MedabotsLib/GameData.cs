@@ -19,6 +19,7 @@ namespace MedabotsLib
         public static BackRefList<Text> CharacterNames;
         public static BackRefList<Text> Messages;
         public static OffsetList<BattleWrapper> Battles;
+        public static OffsetList<HeadWrapper> HeadParts;
 
         public static List<IList<IByteable>> Data;
 
@@ -31,6 +32,7 @@ namespace MedabotsLib
             CharacterNames = GetROMTextData(0x3c40d8);
             PartNames = GetROMTextData(0x3bbb6c);
             Battles = GetROMStructData<BattleWrapper, Battle>(0x3c1ba0, 0xf5, is_ptr_table: true);
+            HeadParts = GetROMStructData<HeadWrapper, Head>(0x3b841c, 120, jump: 4);
             Messages = GetAllMessages();
             
 
@@ -52,7 +54,6 @@ namespace MedabotsLib
             int[] addresses = new int[amount_of_ptrs];
             for (int i = 0; i < amount_of_ptrs; i++)
             {
-                Console.WriteLine(0x47e45c + 4 * i);
                 addresses[i] = Game.GetInstance().ReadLocalAddress(0x47df44 + 4 * i);
             }
             return GetScatteredROMTextData(addresses);
@@ -82,13 +83,13 @@ namespace MedabotsLib
             return new OffsetList<T>(items, address);
         }
 
-        public static OffsetList<W> GetROMStructData<W, T>(int address, int count, bool is_ptr_table = false) where T : IByteable where W : BaseWrapper<T>
+        public static OffsetList<W> GetROMStructData<W, T>(int address, int count, int jump = 1, bool is_ptr_table = false) where T : IByteable where W : BaseWrapper<T>
         {
-            List<T> items = Game.GetInstance().ReadObjects<T>(address, count, is_ptr_table);
+            List<T> items = Game.GetInstance().ReadObjects<T>(address, count, jump, is_ptr_table);
             List<W> wrappers = new List<W>();
-            foreach (T item in items)
+            for (int i = 0; i < items.Count; i++)
             {
-                wrappers.Add(Activator.CreateInstance(typeof(W), new object[] { item }) as W);
+                wrappers.Add(Activator.CreateInstance(typeof(W), new object[] { i, items[i] }) as W);
             }
             return new OffsetList<W>(wrappers, address);
         }
