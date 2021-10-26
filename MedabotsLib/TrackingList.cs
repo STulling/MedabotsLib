@@ -52,7 +52,7 @@ namespace MedabotsLib
 
         public bool IsReadOnly => false;
 
-        public int Length { get; internal set; }
+        public int Length => Count;
 
         public void Add(T item)
         {
@@ -104,7 +104,7 @@ namespace MedabotsLib
 
         public int IndexOf(object item)
         {
-            for (int i = 0; i < this.Length; i++)
+            for (int i = 0; i < this.Count; i++)
             {
                 if (this[i].Equals(item)) return i;
             }
