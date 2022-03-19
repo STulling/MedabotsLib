@@ -36,7 +36,7 @@ namespace MedabotsLib
             string result = $"{this.name}({args.Item1})";
             string comment = "";
             if (name == "Show_Message_A" || name == "Show_Message_B")
-                comment = TextParser.instance.origMessages[((int)args.Item2[0], (int)args.Item2[1])];
+                comment = "None"; //TODO: Fix, TextParser.instance.origMessages[((int)args.Item2[0], (int)args.Item2[1])];
             if (name == "Warp_A" || name == "Warp_B")
                 comment = "IDK BRO";// IdTranslator.IdToMap((byte)args.Item2[0]);
             if (name == "Play_Music" || name == "Play_Persistent_Music")

@@ -14,6 +14,7 @@ namespace MedabotsLib
         public static BackRefList<Text> MedalNames;
         public static BackRefList<Text> BotNames;
         public static BackRefList<Text> PartNames;
+        public static BackRefList<Text> BattlefieldNames;
         public static BackRefList<Text> PreBattleMessage;
         public static BackRefList<Text> PostBattleMessage;
         public static BackRefList<Text> CharacterNames;
@@ -21,71 +22,74 @@ namespace MedabotsLib
         public static OffsetList<BattleWrapper> Battles;
         public static OffsetList<HeadWrapper> HeadParts;
 
-        public static List<IList<IByteable>> Data;
+        public static List<object> Data;
 
-        public static void LoadAll()
+        public static void LoadAll(Game game)
         {
-            MedalNames = GetROMTextData(0x3b65b0);
-            BotNames = GetROMTextData(0x3ba678);
-            PreBattleMessage = GetROMTextData(0x3c2d5c);
-            PostBattleMessage = GetROMTextData(0x3c3b24);
-            CharacterNames = GetROMTextData(0x3c40d8);
-            PartNames = GetROMTextData(0x3bbb6c);
-            Battles = GetROMStructData<BattleWrapper, Battle>(0x3c1ba0, 0xf5, is_ptr_table: true);
-            HeadParts = GetROMStructData<HeadWrapper, Head>(0x3b841c, 120, jump: 4);
-            Messages = GetAllMessages();
-            
+            MedalNames = GetROMTextData(game, 0x3b65b0);
+            BotNames = GetROMTextData(game, 0x3ba678);
+            PreBattleMessage = GetROMTextData(game, 0x3c2d5c);
+            PostBattleMessage = GetROMTextData(game, 0x3c3b24);
+            CharacterNames = GetROMTextData(game, 0x3c40d8);
+            PartNames = GetROMTextData(game, 0x3bbb6c);
+            BattlefieldNames = GetROMTextData(game, 0x3beb88);
+            PartNames = GetROMTextData(game, 0x3bbb6c);
+            Battles = GetROMStructData<BattleWrapper, Battle>(game, 0x3c1ba0, 0xf5, is_ptr_table: true);
+            HeadParts = GetROMStructData<HeadWrapper, Head>(game, 0x3b841c, 120, jump: 4);
+            Messages = GetAllMessages(game);
 
-            Data = new List<IList<IByteable>> {
-                MedalNames.Cast<IByteable>().ToList(),
-                BotNames.Cast<IByteable>().ToList(),
-                Messages.Cast<IByteable>().ToList(),
-                Battles.Cast<IByteable>().ToList(),
-                PartNames.Cast<IByteable>().ToList(),
-                PreBattleMessage.Cast<IByteable>().ToList(),
-                PostBattleMessage.Cast<IByteable>().ToList(),
-                CharacterNames.Cast<IByteable>().ToList()
+
+            Data = new List<object> {
+                MedalNames,
+                BotNames,
+                Messages,
+                Battles,
+                PartNames,
+                BattlefieldNames,
+                PreBattleMessage,
+                PostBattleMessage,
+                CharacterNames
             };
         }
 
-        private static BackRefList<Text> GetAllMessages()
+        private static BackRefList<Text> GetAllMessages(Game game)
         {
             int amount_of_ptrs = 16;
             int[] addresses = new int[amount_of_ptrs];
             for (int i = 0; i < amount_of_ptrs; i++)
             {
-                addresses[i] = Game.GetInstance().ReadLocalAddress(0x47df44 + 4 * i);
+                addresses[i] = game.ReadLocalAddress(0x47df44 + 4 * i);
             }
-            return GetScatteredROMTextData(addresses);
+            return GetScatteredROMTextData(game, addresses);
         }
 
-        public static BackRefList<Text> GetROMTextData(int address)
+        public static BackRefList<Text> GetROMTextData(Game game, int address)
         {
-            List<Text> texts = TextExtract.Extract(address);
+            List<Text> texts = TextExtract.Extract(game, address);
             return new SequentialBackRefList<Text>(texts, address);
         }
 
-        public static BackRefList<Text> GetScatteredROMTextData(int[] addresses)
+        public static BackRefList<Text> GetScatteredROMTextData(Game game, int[] addresses)
         {
             RandomAccessBackRefList<Text> res = new RandomAccessBackRefList<Text>();
             foreach (int address in addresses)
             {
-                List<Text> texts = TextExtract.Extract(address);
+                List<Text> texts = TextExtract.Extract(game, address);
                 res.Merge(new SequentialBackRefList<Text>(texts, address).ToRandomAccess());
             }
             res.Lock();
             return res;
         }
 
-        public static OffsetList<T> GetROMStructData<T>(int address, int count) where T : IByteable
+        public static OffsetList<T> GetROMStructData<T>(Game game, int address, int count) where T : IByteable
         {
-            List<T> items = Game.GetInstance().ReadObjects<T>(address, count);
+            List<T> items = game.ReadObjects<T>(address, count);
             return new OffsetList<T>(items, address);
         }
 
-        public static OffsetList<W> GetROMStructData<W, T>(int address, int count, int jump = 1, bool is_ptr_table = false) where T : IByteable where W : BaseWrapper<T>
+        public static OffsetList<W> GetROMStructData<W, T>(Game game, int address, int count, int jump = 1, bool is_ptr_table = false) where T : IByteable where W : BaseWrapper<T>
         {
-            List<T> items = Game.GetInstance().ReadObjects<T>(address, count, jump, is_ptr_table);
+            List<T> items = game.ReadObjects<T>(address, count, jump, is_ptr_table);
             List<W> wrappers = new List<W>();
             for (int i = 0; i < items.Count; i++)
             {

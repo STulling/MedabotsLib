@@ -10,10 +10,10 @@ namespace MedabotsLib
     public class MemWriter
     {
         int offset;
-        byte[] file;
-        public MemWriter(byte[] file, int offset)
+        Game game;
+        public MemWriter(Game game, int offset)
         {
-            this.file = file;
+            this.game = game;
             this.offset = offset;
         }
 
@@ -21,7 +21,7 @@ namespace MedabotsLib
         {
             int memoryOffset = this.offset;
 
-            Game.GetInstance().WritePayload(memoryOffset - 0x8000000, data);
+            game.WritePayload(memoryOffset - 0x8000000, data);
             this.offset += data.Length;
 
             return memoryOffset;
@@ -30,7 +30,7 @@ namespace MedabotsLib
         public void PatchMemoryAndStoreAddress(byte[] data, int address)
         {
             int stored_offset = PatchMemory(data);
-            Game.GetInstance().Write(address, stored_offset);
+            game.Write(address, stored_offset);
         }
     }
 }

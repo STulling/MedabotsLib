@@ -13,24 +13,9 @@ namespace GBALib
         private Game() { }
 
         private static Game _instance;
-        private byte[] ROM;
+        public byte[] ROM;
 
-        public static void Create(byte[] ROM)
-        {
-            if (_instance == null)
-            {
-                _instance = new Game
-                {
-                    ROM = ROM
-                };
-            }
-            else
-            {
-                throw new Exception("Cannot create the ROM twice.");
-            }
-        }
-
-        public static void Load(string filename)
+        public static Game Load(string filename)
         {
             if (_instance == null)
             {
@@ -38,6 +23,7 @@ namespace GBALib
                 {
                     ROM = File.ReadAllBytes(filename)
                 };
+                return _instance;
             }
             else
             {
@@ -45,13 +31,9 @@ namespace GBALib
             }
         }
 
-        public static Game GetInstance()
+        public void Save(string filename)
         {
-            if (_instance == null)
-            {
-                throw new Exception("Create the game first.");
-            }
-            return _instance;
+            File.WriteAllBytes(filename, this.ROM);
         }
 
         public T[] ReadUntil<T>(int offset, T trigger, int getnext = 0)

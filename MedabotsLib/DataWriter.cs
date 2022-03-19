@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MedabotsLib
 {
-    class DataWriter
+    public class DataWriter
     {
         int offset;
 
@@ -17,9 +17,9 @@ namespace MedabotsLib
             this.offset = startOffset;
         }
 
-        public void Write(List<IList<IByteable>> allLists)
+        public void Write(Game game, List<object> allLists)
         {
-            foreach (IList<IByteable> list in allLists) 
+            foreach (object list in allLists) 
             {
                 if (list.GetType() == typeof(OffsetList<IByteable>))
                 {
@@ -28,7 +28,7 @@ namespace MedabotsLib
                     foreach (IByteable byteable in offList)
                     {
                         byte[] data = byteable.ToBytes();
-                        Game.GetInstance().Write(offset, data);
+                        game.Write(offset, data);
                         offset += data.Length;
                     }
                 }
@@ -38,8 +38,8 @@ namespace MedabotsLib
                     refList.Verify();
                     foreach (BackRef bref in refList.ToBackRefs())
                     {
-                        Game.GetInstance().Write(this.offset, bref.data);
-                        Game.GetInstance().Write(bref.backref, this.offset);
+                        game.Write(this.offset, bref.data);
+                        game.Write(bref.backref, this.offset);
                         this.offset += bref.data.Length;
                     }
                 }
