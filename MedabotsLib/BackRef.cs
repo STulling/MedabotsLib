@@ -8,12 +8,12 @@ namespace MedabotsLib
 {
     public struct BackRef
     {
-        public int backref;
+        public int[] backrefs;
         public byte[] data;
 
-        public BackRef(int backref, byte[] data) : this()
+        public BackRef(int[] backrefs, byte[] data) : this()
         {
-            this.backref = backref;
+            this.backrefs = backrefs;
             this.data = data;
         }
     }
