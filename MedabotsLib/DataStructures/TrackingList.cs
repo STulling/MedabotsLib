@@ -1,19 +1,23 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MedabotsLib
+namespace MedabotsLib.DataStructures
 {
+    /// <summary>
+    /// A list that tracks changes to its elements
+    /// </summary>
+    /// <typeparam name="T">The type of the list</typeparam>
     public class TrackingList<T> : IList<T>
     {
         protected List<T> list;
         protected Dictionary<int, T> changes;
         protected bool locked = false;
 
+        /// <summary>
+        /// Creates a new TrackingList with a given list
+        /// It is immediately locked, so all changes from that point on will be tracked
+        /// </summary>
         public TrackingList(List<T> list)
         {
             this.list = list;
@@ -21,10 +25,18 @@ namespace MedabotsLib
             this.Lock();
         }
 
-        public TrackingList()
+        /// <summary>
+        /// Creates a new TrackingList
+        /// </summary>
+        /// <param name="locked">Whether the list should be locked immediately</param>
+        public TrackingList(bool locked = false)
         {
             this.list = new List<T>();
             this.changes = new Dictionary<int, T>();
+            if (locked)
+            {
+                this.Lock();
+            }
         }
 
         public T this[int i]
@@ -35,10 +47,7 @@ namespace MedabotsLib
             set { 
                 if (this.locked)
                 {
-                    if (locked)
-                    {
-                        changes.Add(i, value);
-                    }
+                    changes.Add(i, value);
                     list[i] = value;
                 }
                 else

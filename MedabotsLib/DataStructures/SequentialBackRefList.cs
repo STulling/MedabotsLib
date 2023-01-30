@@ -1,11 +1,7 @@
-﻿using MedabotsLib.Data;
-using System;
+﻿using MedabotsLib.Utils;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MedabotsLib
+namespace MedabotsLib.DataStructures
 {
     public class SequentialBackRefList<T> : BackRefList<T> where T : IByteable
     {

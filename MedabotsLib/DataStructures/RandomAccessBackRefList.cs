@@ -1,12 +1,8 @@
-﻿using GBALib;
-using MedabotsLib.Data;
+﻿using MedabotsLib.Utils;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MedabotsLib
+namespace MedabotsLib.DataStructures
 {
     public class RandomAccessBackRefList<T> : BackRefList<T> where T : IByteable
     {

@@ -1,17 +1,23 @@
-﻿using MedabotsLib.Data;
-using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MedabotsLib.Utils;
 
-namespace MedabotsLib
+namespace MedabotsLib.DataStructures
 {
+    /// <summary>
+    /// A list of binary structs that start at a certain offset in the ROM
+    /// </summary>
+    /// <typeparam name="T">The binary struct of the list</typeparam>
     public class OffsetList<T> : IList<T> where T : IByteable
     {
         public int offset;
         public List<T> list;
+
+        /// <summary>
+        /// Creates a new OffsetList
+        /// </summary>
+        /// <param name="list">The list of structs</param>
+        /// <param name="offset">The offset of the structs in the ROM</param>
         public OffsetList(List<T> list, int offset)
         {
             this.list = list;

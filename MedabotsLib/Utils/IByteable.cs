@@ -5,8 +5,11 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MedabotsLib.Data
+namespace MedabotsLib.Utils
 {
+    /// <summary>
+    /// An interface for structs that can be converted to a byte array
+    /// </summary>
     public interface IByteable
     {
         public virtual byte[] ToBytes()

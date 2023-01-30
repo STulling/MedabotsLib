@@ -1,17 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MedabotsLib.GameData.Raw;
 
-namespace MedabotsLib.Data
+namespace MedabotsLib.GameData.Wrappers
 {
     public class HeadWrapper : BaseWrapper<Head>
     {
         public HeadWrapper(int id, Head data) : base(id, data)
         { }
 
-        public string Name => GameData.PartNames[id*4].Str;
+        public string Name {
+            get { return AllData.PartNames[id*4].Str; }
+            set { AllData.PartNames[id*4].Str = value; }
+        }
+
+        public byte Technique {
+            get { return data.technique; }
+            set { data.technique = value; }
+        }
+
+        public byte Speciality {
+            get { return data.speciality; }
+            set { data.speciality = value; }
+        }
 
         public byte RateOfSuccess {
             get { return data.RoS; }
@@ -32,8 +42,8 @@ namespace MedabotsLib.Data
 
         public string MedalCompatibility
         {
-            get { return GameData.MedalNames[data.medal_compatibility].Str; }
-            set { data.medal_compatibility = (byte)GameData.MedalNames.IndexOf(value); }
+            get { return AllData.MedalNames[data.medal_compatibility].Str; }
+            set { data.medal_compatibility = (byte)AllData.MedalNames.IndexOf(value); }
         }
 
         public byte Armor

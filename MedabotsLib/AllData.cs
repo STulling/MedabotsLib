@@ -1,11 +1,15 @@
 ﻿using GBALib;
-using MedabotsLib.Data;
+using MedabotsLib.GameData;
+using MedabotsLib.GameData.Raw;
+using MedabotsLib.Utils;
+using MedabotsLib.GameData.Wrappers;
+using MedabotsLib.DataStructures;
 using System;
 using System.Collections.Generic;
 
 namespace MedabotsLib
 {
-    public static class GameData
+    public static class AllData
     {
         public static BackRefList<Text> MedalNames;
         public static BackRefList<Text> BotNames;
@@ -18,8 +22,6 @@ namespace MedabotsLib
         public static OffsetList<BattleWrapper> Battles;
         public static OffsetList<HeadWrapper> HeadParts;
 
-        public static List<object> Data;
-
         public static void LoadAll(Game game)
         {
             MedalNames = GetROMTextData(game, 0x3b65b0);
@@ -29,23 +31,9 @@ namespace MedabotsLib
             CharacterNames = GetROMTextData(game, 0x3c40d8);
             PartNames = GetROMTextData(game, 0x3bbb6c);
             BattlefieldNames = GetROMTextData(game, 0x3beb88);
-            PartNames = GetROMTextData(game, 0x3bbb6c);
             Battles = GetROMStructData<BattleWrapper, Battle>(game, 0x3c1ba0, 0xf5, is_ptr_table: true);
             HeadParts = GetROMStructData<HeadWrapper, Head>(game, 0x3b841c, 120, jump: 4);
             Messages = GetAllMessages(game);
-
-
-            Data = new List<object> {
-                MedalNames,
-                BotNames,
-                Messages,
-                Battles,
-                PartNames,
-                BattlefieldNames,
-                PreBattleMessage,
-                PostBattleMessage,
-                CharacterNames
-            };
         }
 
         private static BackRefList<Text> GetAllMessages(Game game)
@@ -83,10 +71,10 @@ namespace MedabotsLib
             return new OffsetList<T>(items, address);
         }
 
-        public static OffsetList<W> GetROMStructData<W, T>(Game game, int address, int count, int jump = 1, bool is_ptr_table = false) where T : IByteable where W : BaseWrapper<T>
+        public static OffsetList<W> GetROMStructData<W, T>(Game game, int address, int count, int jump = 1, bool is_ptr_table = false) where W : BaseWrapper<T> where T : IByteable
         {
             List<T> items = game.ReadObjects<T>(address, count, jump, is_ptr_table);
-            List<W> wrappers = new List<W>();
+            List<W> wrappers = new();
             for (int i = 0; i < items.Count; i++)
             {
                 wrappers.Add(Activator.CreateInstance(typeof(W), new object[] { i, items[i] }) as W);

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
+using SkiaSharp;
 
 /*
  * Joinked from: https://github.com/Normmatt/Medarot-Navi-GBA-Translation/blob/master/MedabotsMapEditor/MedabotsMapEditor/GBA/Graphics.cs
+ * But we're unjoinking now
  */
 
 namespace GBALib
@@ -17,40 +17,33 @@ namespace GBALib
         Bitmap8bit
     }
 
-    public unsafe static class GBAGraphics
+    public static class GBAGraphics
     {
-        static public Bitmap ToBitmap(byte[] GBAGraphics, int length, int index, Color[] palette, int width, GraphicsMode mode, out int emptyGraphicBlocks)
+        static public SKBitmap ToBitmap(byte[] GBAGraphics, SKColor[] palette, int width, GraphicsMode mode, out int emptyGraphicBlocks)
         {
-            fixed (byte* pointer = &GBAGraphics[index])
-            {
-                return ToBitmap(pointer, length, palette, width, mode, out emptyGraphicBlocks);
-            }
-        }
-
-        static public Bitmap ToBitmap(byte* GBAGraphics, int length, Color[] palette, int width, GraphicsMode mode, out int emptyGraphicBlocks)
-        {
-            Bitmap result = null;
+            SKBitmap result = null;
             emptyGraphicBlocks = 0;
             switch (mode)
             {
                 case GraphicsMode.Tile8bit:
-                    result = FromTile8bit(GBAGraphics, length, palette, width, out emptyGraphicBlocks);
+                    result = FromTile8bit(GBAGraphics, palette, width, out emptyGraphicBlocks);
                     break;
                 case GraphicsMode.Tile4bit:
-                    result = FromTile4bit(GBAGraphics, length, palette, width, out emptyGraphicBlocks);
+                    result = FromTile4bit(GBAGraphics, palette, width, out emptyGraphicBlocks);
                     break;
                 case GraphicsMode.BitmapTrueColour:
-                    result = FromBitmapTrueColour(GBAGraphics, length, palette, width, out emptyGraphicBlocks);
+                    result = FromBitmapTrueColour(GBAGraphics, palette, width, out emptyGraphicBlocks);
                     break;
                 case GraphicsMode.Bitmap8bit:
-                    result = FromBitmapIndexed(GBAGraphics, length, palette, width, out emptyGraphicBlocks);
+                    result = FromBitmapIndexed(GBAGraphics, palette, width, out emptyGraphicBlocks);
                     break;
             }
             return result;
         }
 
-        static private Bitmap FromTile8bit(byte* GBAGraphics, int length, Color[] palette, int width, out int emptyGraphicBlocks)
+        static private SKBitmap FromTile8bit(byte[] GBAGraphics, SKColor[] palette, int width, out int emptyGraphicBlocks)
         {
+            int length = GBAGraphics.Length;
             int height = length / width;
             if (height % 8 != 0)
                 height += 8 - (height % 8);
@@ -59,24 +52,22 @@ namespace GBALib
                 height += 8;
             emptyGraphicBlocks /= 64;
 
-            Bitmap result = new Bitmap(width, height, PixelFormat.Format8bppIndexed);
-            result.Palette = paletteMaker(palette, result.Palette);
-
-            BitmapData bData = result.LockBits(new Rectangle(new Point(), result.Size), ImageLockMode.WriteOnly, result.PixelFormat);
+            SKBitmap result = new SKBitmap(width, height);
 
             for (int i = 0; i < length; i++)
             {
-                byte pixel = GBAGraphics[i];
-                int position = bitmapPosition(tiledCoordinate(i, width, 8), width);
-                ((byte*)bData.Scan0)[position] = pixel;
+                byte paletteIndex = GBAGraphics[i];
+                SKColor pixel = palette[paletteIndex];
+                SKPoint tiledPosition = tiledCoordinate(i, width, 8);
+                result.SetPixel((int)tiledPosition.X, (int)tiledPosition.Y, pixel);
             }
 
-            result.UnlockBits(bData);
             return result;
         }
 
-        static private Bitmap FromTile4bit(byte* GBAGraphics, int length, Color[] palette, int width, out int emptyGraphicBlocks)
+        static private SKBitmap FromTile4bit(byte[] GBAGraphics, SKColor[] palette, int width, out int emptyGraphicBlocks)
         {
+            int length = GBAGraphics.Length;
             int height = length * 2 / width;
 
             if (height % 8 != 0 || height == 0)
@@ -85,67 +76,73 @@ namespace GBALib
             while ((emptyGraphicBlocks = height * width - length * 2) < 0)
                 height += 8;
             emptyGraphicBlocks /= 64;
-            Bitmap result = new Bitmap(width, height, PixelFormat.Format8bppIndexed);
-            result.Palette = paletteMaker(palette, result.Palette);
-
-            BitmapData bData = result.LockBits(new Rectangle(new Point(), result.Size), ImageLockMode.WriteOnly, result.PixelFormat);
+            SKBitmap result = new SKBitmap(width, height);
 
             for (int i = 0; i < length; i++)
             {
                 byte pixel1 = (byte)(GBAGraphics[i] & 0xF);
+                SKPoint position1 = tiledCoordinate(i * 2, width, 8);
+                result.SetPixel((int)position1.X, (int)position1.Y, palette[pixel1]);
+
                 byte pixel2 = (byte)(GBAGraphics[i] >> 4);
-                int position = bitmapPosition(tiledCoordinate(i * 2, width, 8), width);
-                ((byte*)bData.Scan0)[position] = pixel1;
-                ((byte*)bData.Scan0)[position + 1] = pixel2;
+                SKPoint position2 = tiledCoordinate(i * 2 + 1, width, 8);
+                result.SetPixel((int)position2.X, (int)position2.Y, palette[pixel2]);
             }
-
-            result.UnlockBits(bData);
-
             return result;
         }
 
-        static private Bitmap FromBitmapTrueColour(byte* GBAGraphics, int length, Color[] palette, int width, out int emptyGraphicBlocks)
+        static private SKColor RGB555toRGB888(short GBAColor, int index)
         {
+            byte red = (byte)((GBAColor & 0x1F) << 3);
+            byte green = (byte)(((GBAColor >> 5) & 0x1F) << 3);
+            byte blue = (byte)(((GBAColor >> 10) & 0x1F) << 3);
+            return new SKColor(red, green, blue);
+        }
+
+        static private SKBitmap FromBitmapTrueColour(byte[] GBAGraphics, SKColor[] palette, int width, out int emptyGraphicBlocks)
+        {
+            int length = GBAGraphics.Length;
             int height = (length / 2) / width;
             while (height * width < length / 2)
                 height++;
             emptyGraphicBlocks = length / 2 - height * width;
 
-            Bitmap result = new Bitmap(width, height, PixelFormat.Format16bppRgb555);
+            SKBitmap result = new SKBitmap(width, height);
 
-            BitmapData bData = result.LockBits(new Rectangle(new Point(), result.Size), ImageLockMode.WriteOnly, result.PixelFormat);
+            for (int i = 0; i < length; i+=2){
+                short GBAColor = (short)(GBAGraphics[i] | (GBAGraphics[i + 1] << 8));
+                SKColor pixel = RGB555toRGB888(GBAColor, i);
+                SKPoint position = tiledCoordinate(i / 2, width, 1);
+                result.SetPixel((int)position.X, (int)position.Y, pixel);
+            }
 
-            byte* bitmap = (byte*)bData.Scan0;
-            for (int i = 0; i < length; i++)
-                bitmap[i] = GBAGraphics[i];
-
-            result.UnlockBits(bData);
             return result;
         }
 
-        static private Bitmap FromBitmapIndexed(byte* GBAGraphics, int length, Color[] palette, int width, out int emptyGraphicBlocks)
+        static private SKBitmap FromBitmapIndexed(byte[] GBAGraphics, SKColor[] palette, int width, out int emptyGraphicBlocks)
         {
+            int length = GBAGraphics.Length;
             int height = length / width;
             while (height * width < length)
                 height++;
 
             emptyGraphicBlocks = length - height * width;
 
-            Bitmap result = new Bitmap(width, height, PixelFormat.Format8bppIndexed);
-            result.Palette = paletteMaker(palette, result.Palette);
+            SKBitmap result = new SKBitmap(width, height);
 
-            BitmapData bData = result.LockBits(new Rectangle(new Point(), result.Size), ImageLockMode.WriteOnly, result.PixelFormat);
-
-            byte* bitmap = (byte*)bData.Scan0;
             for (int i = 0; i < length; i++)
-                bitmap[i] = GBAGraphics[i];
+            {
+                byte paletteIndex = GBAGraphics[i];
+                SKColor pixel = palette[paletteIndex];
+                SKPoint position = tiledCoordinate(i, width, 1);
+                result.SetPixel((int)position.X, (int)position.Y, pixel);
+            }
 
-            result.UnlockBits(bData);
             emptyGraphicBlocks = 0;
             return result;
         }
 
-        static public byte[] ToGBARaw(Bitmap image, Color[] palette, GraphicsMode mode)
+        static public byte[] ToGBARaw(SKBitmap image, SKColor[] palette, GraphicsMode mode)
         {
             byte[] result = null;
             switch (mode)
@@ -166,42 +163,43 @@ namespace GBALib
             return result;
         }
 
-        static private byte[] ToTile8bit(Bitmap image, Color[] palette)
+        static private int findPaletteIndex(SKColor color, SKColor[] palette)
+        {
+            int i = 0;
+            while (i < palette.Length && palette[i] != color)
+                i++;
+            if (i == palette.Length)
+                i = 0;
+            return i;
+        }
+
+        static private byte[] ToTile8bit(SKBitmap image, SKColor[] palette)
         {
             byte[] result = new byte[image.Width * image.Height];
             for (int y = 0; y < image.Height; y++)
             {
                 for (int x = 0; x < image.Width; x++)
                 {
-                    Color color = image.GetPixel(x, y);
-                    int i = 0;
-                    while (i < palette.Length && palette[i] != color)
-                        i++;
-                    if (i == palette.Length)
-                        i = 0;
-
-                    int position = tiledPosition(new Point(x, y), image.Width, 8);
+                    SKColor color = image.GetPixel(x, y);
+                    int i = findPaletteIndex(color, palette);
+                    int position = tiledPosition(new SKPoint(x, y), image.Width, 8);
                     result[position] = (byte)i;
                 }
             }
             return result;
         }
 
-        static private byte[] ToTile4bit(Bitmap image, Color[] palette)
+        static private byte[] ToTile4bit(SKBitmap image, SKColor[] palette)
         {
             byte[] result = new byte[image.Width * image.Height / 2];
             for (int y = 0; y < image.Height; y++)
             {
                 for (int x = 0; x < image.Width; x++)
                 {
-                    Color color = image.GetPixel(x, y);
-                    int i = 0;
-                    while (i < palette.Length && palette[i] != color)
-                        i++;
-                    if (i == palette.Length)
-                        i = 0;
+                    SKColor color = image.GetPixel(x, y);
+                    int i = findPaletteIndex(color, palette);
 
-                    int position = tiledPosition(new Point(x, y), image.Width, 8);
+                    int position = tiledPosition(new SKPoint(x, y), image.Width, 8);
 
                     if ((position & 1) == 1)
                         i <<= 4;
@@ -212,7 +210,7 @@ namespace GBALib
             return result;
         }
 
-        static private byte[] ToBitmapTrueColour(Bitmap image)
+        static private byte[] ToBitmapTrueColour(SKBitmap image)
         {
             byte[] result = new byte[image.Width * image.Height * 2];
 
@@ -220,11 +218,11 @@ namespace GBALib
             {
                 for (int x = 0; x < image.Width; x++)
                 {
-                    Color color = image.GetPixel(x, y);
+                    SKColor color = image.GetPixel(x, y);
 
                     ushort colorValue = toGBAcolor(color);
 
-                    int position = bitmapPosition(new Point(x, y), image.Width);
+                    int position = BitmapPosition(new SKPoint(x, y), image.Width);
                     result[position * 2] = (byte)(colorValue & 0xFF);
                     result[position * 2 + 1] = (byte)((colorValue >> 8) & 0xFF);
                 }
@@ -232,19 +230,15 @@ namespace GBALib
             return result;
         }
 
-        static private byte[] ToBitmapIndexed(Bitmap image, Color[] palette)
+        static private byte[] ToBitmapIndexed(SKBitmap image, SKColor[] palette)
         {
             byte[] result = new byte[image.Width * image.Height];
             for (int y = 0; y < image.Height; y++)
             {
                 for (int x = 0; x < image.Width; x++)
                 {
-                    Color color = image.GetPixel(x, y);
-                    int i = 0;
-                    while (i < palette.Length && palette[i] != color)
-                        i++;
-                    if (i == palette.Length)
-                        i = 0;
+                    SKColor color = image.GetPixel(x, y);
+                    int i = findPaletteIndex(color, palette);
 
                     result[y * image.Width + x] = (byte)i;
                 }
@@ -252,25 +246,9 @@ namespace GBALib
             return result;
         }
 
-        static private ColorPalette paletteMaker(Color[] palette, ColorPalette original)
+        static public int RawGraphicsLength(SKSize size, GraphicsMode mode)
         {
-            if (palette == null)
-                return original;
-
-            for (int i = 0; i < palette.Length && i < original.Entries.Length; i++)
-            {
-                original.Entries[i] = palette[i];
-            }
-            for (int i = palette.Length; i < original.Entries.Length; i++)
-            {
-                original.Entries[i] = Color.FromArgb(0, 0, 0);
-            }
-            return original;
-        }
-
-        static public int RawGraphicsLength(Size size, GraphicsMode mode)
-        {
-            return size.Width * size.Height * BitsPerPixel(mode) / 8;
+            return (int)(size.Width * size.Height * BitsPerPixel(mode) / 8);
         }
 
         static public int BitsPerPixel(GraphicsMode mode)
@@ -290,54 +268,46 @@ namespace GBALib
             }
         }
 
-        static public Color[] toPalette(byte[] data, int offset, int amountOfColours)
+        static private SKColor[] toPalette(ushort[] GBAPalette, int amountOfColours)
         {
-            fixed (byte* ptr = &data[offset])
-            {
-                return toPalette((ushort*)ptr, amountOfColours);
-            }
-        }
-
-        static private Color[] toPalette(ushort* GBAPalette, int amountOfColours)
-        {
-            Color[] palette = new Color[amountOfColours];
+            SKColor[] palette = new SKColor[amountOfColours];
 
             for (int i = 0; i < palette.Length; i++)
             {
-                palette[i] = toColor(GBAPalette);
-                GBAPalette++;
+                palette[i] = toColor(GBAPalette[i]);
             }
             return palette;
         }
 
-        static public byte[] toRawGBAPalette(Color[] palette)
+        static public byte[] toRawGBAPalette(SKColor[] palette)
         {
             byte[] result = new byte[palette.Length * 2];
-            fixed (byte* pointer = &result[0])
+            for (int i = 0; i < palette.Length; i++)
             {
-                ushort* upointer = (ushort*)pointer;
-                for (int i = 0; i < palette.Length; i++)
-                {
-                    *upointer = toGBAcolor(palette[i]);
-                    upointer++;
-                }
+                ushort color = toGBAcolor(palette[i]);
+                result[i * 2] = (byte)(color & 0xFF);
+                result[i * 2 + 1] = (byte)((color >> 8) & 0xFF);
             }
             return result;
         }
 
-        static private Color toColor(ushort* GBAColor)
+        static private SKColor toColor(ushort GBAColor)
         {
-            int red = ((*GBAColor) & 0x1F) * 8;
-            int green = (((*GBAColor) >> 5) & 0x1F) * 8;
-            int blue = (((*GBAColor) >> 10) & 0x1F) * 8;
-            return Color.FromArgb(red, green, blue);
+            int red = ((GBAColor) & 0x1F) * 8;
+            int green = (((GBAColor) >> 5) & 0x1F) * 8;
+            int blue = (((GBAColor) >> 10) & 0x1F) * 8;
+            return new SKColor((byte)red, (byte)green, (byte)blue);
         }
 
-        static public ushort toGBAcolor(Color color)
+        /// <summary>
+        /// Converts a SKColor to a GBA color (RGB555)
+        /// </summary>
+        /// <param name="color">The SKColor to convert</param>
+        static public ushort toGBAcolor(SKColor color)
         {
-            byte red = (byte)(color.R >> 3);
-            byte blue = (byte)(color.B >> 3);
-            byte green = (byte)(color.G >> 3);
+            byte red = (byte)(color.Red >> 3);
+            byte green = (byte)(color.Green >> 3);
+            byte blue = (byte)(color.Blue >> 3);
             return (ushort)(red + (green << 5) + (blue << 10));
         }
 
@@ -349,267 +319,61 @@ namespace GBALib
             return (ushort)(GBAred + (GBAgreen << 5) + (GBAblue << 10));
         }
 
-        static private Point bitmapCoordinate(int position, int width)
+        static private SKPoint BitmapCoordinate(int position, int width)
         {
-            Point point = new Point();
+            SKPoint point = new SKPoint();
             point.X = position / width;
             point.Y = position % width;
             return point;
         }
 
-        static private Point tiledCoordinate(int position, int width, int tileDimension)
+        static private SKPoint tiledCoordinate(int position, int width, int tileDimension)
         {
             if (width % tileDimension != 0)
                 throw new ArgumentException("Bitmaps width needs to be multiple of tile's width.");
 
-            Point point = new Point();
+            SKPoint point = new SKPoint();
             point.X = (position % tileDimension) + ((position / (tileDimension * tileDimension)) % (width / tileDimension)) * tileDimension;
             point.Y = ((position % (tileDimension * tileDimension)) / tileDimension) + ((position / (tileDimension * tileDimension)) * tileDimension / width) * tileDimension;
             return point;
         }
 
-        static private int bitmapPosition(Point coordinate, int width)
+        static private int BitmapPosition(SKPoint coordinate, int width)
         {
-            return coordinate.X + coordinate.Y * width;
+            return (int)(coordinate.X + coordinate.Y * width);
         }
 
-        static private int tiledPosition(Point coordinate, int width, int tileDimension)
+        static private int tiledPosition(SKPoint coordinate, int width, int tileDimension)
         {
             if (width % tileDimension != 0)
                 throw new ArgumentException("Bitmaps width needs to be multiple of tile's width.");
 
-            return (coordinate.X % tileDimension + (coordinate.Y % tileDimension) * tileDimension +
+            return (int)((coordinate.X % tileDimension + (coordinate.Y % tileDimension) * tileDimension +
                    (coordinate.X / tileDimension) * (tileDimension * tileDimension) +
-                   (coordinate.Y / tileDimension) * (tileDimension * width));
+                   (coordinate.Y / tileDimension) * (tileDimension * width)));
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="graphics"></param>
-        /// <param name="mode"></param>
-        /// <param name="TSAdata"></param>
-        /// <param name="offset"></param>
-        /// <param name="TSAsize"></param>
-        /// <returns>Tile8bit raw GBA graphics</returns>
-        static public byte[] TSAmap(byte[] graphics, GraphicsMode mode, byte[] TSAdata, int offset, Size TSAsize)
+        static public (byte[], byte[]) ConvertToGBA(SKBitmap image, GraphicsMode mode)
         {
-            byte[] result;
-            if (TSAsize.Height * TSAsize.Width > TSAdata.Length / 2)
-            {
-                TSAsize.Height = TSAdata.Length / (2 * TSAsize.Width);
+            if (mode == GraphicsMode.BitmapTrueColour) {
+                // Convert colors to 16 bit
             }
-            fixed (byte* graphicsPointer = &graphics[0])
-            {
-                fixed (byte* TSApointer = &TSAdata[offset])
-                {
-                    switch (mode)
-                    {
-                        case GraphicsMode.Tile8bit:
-                            result = TSAmapFrom8bitTileGraphics(graphicsPointer, graphics.Length / 64, TSApointer, TSAsize);
-                            break;
-                        case GraphicsMode.Tile4bit:
-                            result = TSAmapFrom4bitTileGraphics(graphicsPointer, graphics.Length / 32, TSApointer, TSAsize);
-                            break;
-                        default:
-                            throw new ArgumentException("GraphicsMode has to be either Tile8bit or Tile4bit");
-                    }
-                }
-            }
-            return result;
+
+            (SKBitmap, SKColor[]) quantized = Quantize(image);
+            SKBitmap quantizedImage = quantized.Item1;
+            SKColor[] palette = quantized.Item2;
+
+            byte[] imageData = ToGBARaw(quantizedImage, palette, mode);
+            byte[] paletteData = toRawGBAPalette(palette);
+
+            return (imageData, paletteData);
         }
 
-        static private byte[] TSAmapFrom8bitTileGraphics(byte* graphics, int amountOfGraphicsBlocks, byte* TSAdata, Size TSAsize)
+        static private (SKBitmap, SKColor[]) Quantize(SKBitmap bitmap, int colorlimit)
         {
-            int AmountTSAblocks = TSAsize.Height * TSAsize.Width;
-            byte[] result = new byte[AmountTSAblocks * 64];
+            SKBitmap result = new SKBitmap(bitmap.Width, bitmap.Height);
 
-            fixed (byte* resultPointer = &result[0])
-            {
-                byte* destPointer = resultPointer;
-                for (int i = 0; i < AmountTSAblocks; i++)
-                {
-                    ushort TSA = ((ushort*)TSAdata)[i];
-                    int graphicsIndex = TSA & 0x3FF;
-                    if (graphicsIndex < amountOfGraphicsBlocks)
-                    {
-                        bool Hflip = ((TSA >> 10) & 1) == 1;
-                        bool Vflip = ((TSA >> 11) & 1) == 1;
-                        byte* source = graphics + graphicsIndex * 64;
-                        if (Hflip && Vflip)
-                            source += 64 - 1;
-                        else if (Vflip)
-                            source += 64 - 8 + 1;
-                        else if (Hflip)
-                            source += 8 - 1;
-
-                        for (int y = 0; y < 8; y++)
-                        {
-                            for (int x = 0; x < 8; x++)
-                            {
-                                destPointer[0] = source[0];
-                                destPointer++;
-                                if (Hflip)
-                                    source--;
-                                else
-                                    source++;
-                            }
-
-                            if (Hflip != Vflip)
-                            {
-                                if (Hflip)
-                                    source += 8;
-                                else
-                                    source -= 8;
-                            }
-                        }
-                    }
-                }
-            }
-            return result;
-        }
-
-        static private byte[] TSAmapFrom4bitTileGraphics(byte* graphics, int amountOfGraphicsBlocks, byte* TSAdata, Size TSAsize)
-        {
-            int AmountTSAblocks = TSAsize.Height * TSAsize.Width;
-            byte[] result = new byte[AmountTSAblocks * 64];
-
-            fixed (byte* resultPointer = &result[0])
-            {
-                for (int i = 0; i < AmountTSAblocks; i++)
-                {
-                    ushort TSA = (ushort)(TSAdata[2 * i] + (TSAdata[2 * i + 1] << 8));
-                    int graphicsIndex = TSA & 0x3FF;
-                    byte* destPointer = resultPointer + 64 * i;
-
-                    if (graphicsIndex < amountOfGraphicsBlocks)
-                    {
-                        int palette = (TSA >> 8) & 0xF0;
-                        bool Hflip = ((TSA >> 10) & 1) == 1;
-                        bool Vflip = ((TSA >> 11) & 1) == 1;
-                        byte* source = graphics + graphicsIndex * 32;
-
-                        if (Hflip && Vflip)
-                            source += 32 - 1;
-                        else if (Vflip)
-                            source += 32 - 4;
-                        else if (Hflip)
-                            source += 4 - 1;
-
-                        for (int y = 0; y < 8; y++)
-                        {
-                            for (int x = 0; x < 4; x++)
-                            {
-                                int second = source[0] >> 4;
-                                int first = source[0] & 0xF;
-                                if (Hflip)
-                                {
-                                    destPointer[0] = (byte)(second | palette);
-                                    destPointer[1] = (byte)(first | palette);
-                                    source--;
-                                }
-                                else
-                                {
-                                    destPointer[0] = (byte)(first | palette);
-                                    destPointer[1] = (byte)(second | palette);
-                                    source++;
-                                }
-                                destPointer += 2;
-                            }
-
-                            if (Hflip != Vflip)
-                            {
-                                if (Hflip)
-                                    source += 8;
-                                else
-                                    source -= 8;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        static public byte[][] GenerateGBAImage(Bitmap bitmap, GraphicsMode mode)
-        {
-            byte[][] result;
-            Bitmap quantazised;
-            BitmapData bmp;
-
-            switch (mode)
-            {
-                case GraphicsMode.Tile8bit:
-                    result = new byte[3][];
-                    quantazised = Quantazase(bitmap);
-
-                    result[0] = ToTile8bit(bitmap, quantazised.Palette.Entries);
-                    result[1] = toRawGBAPalette(quantazised.Palette.Entries);
-
-                    //yes, I'm lazy
-                    result[2] = new byte[result[0].Length * 2];
-                    fixed (byte* temp = &result[2][0])
-                    {
-                        short* pointer = (short*)temp;
-                        int tiles = 0;
-                        for (int i = 0; i < result[0].Length; i++)
-                        {
-                            pointer[i] = (short)tiles++;
-                        }
-                    }
-
-                    break;
-                case GraphicsMode.Tile4bit:
-                    result = new byte[3][];
-                    quantazised = Quantazase(bitmap);
-
-                    result[0] = ToTile4bit(bitmap, quantazised.Palette.Entries);
-                    result[1] = toRawGBAPalette(quantazised.Palette.Entries);
-
-                    //yes, I'm lazy
-                    result[2] = new byte[result[0].Length * 2];
-                    fixed (byte* temp = &result[2][0])
-                    {
-                        short* pointer = (short*)temp;
-                        int tiles = 0;
-                        for (int i = 0; i < result[0].Length; i++)
-                        {
-                            pointer[i] = (short)tiles++;
-                        }
-                    }
-                    break;
-                default:
-                    throw new ArgumentException();
-            }
-            return result;
-        }
-
-        static private Bitmap Quantazase(Bitmap bitmap)
-        {
-            if (bitmap.PixelFormat == PixelFormat.Format8bppIndexed)
-                return bitmap;
-
-            Bitmap result = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format8bppIndexed);
-            Bitmap trueColorBitmap;
-
-            if (bitmap is Bitmap && bitmap.PixelFormat == PixelFormat.Format32bppArgb)
-            {
-                trueColorBitmap = bitmap;
-            }
-            else
-            {
-                trueColorBitmap = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
-
-                using (Graphics g = Graphics.FromImage(trueColorBitmap))
-                {
-                    g.PageUnit = GraphicsUnit.Pixel;
-                    g.DrawImage(bitmap, 0, 0, bitmap.Width, bitmap.Height);
-                }
-            }
-
-            Octree<List<Color>> colors = new Octree<List<Color>>(5, 5);
-            BitmapData bmpData = trueColorBitmap.LockBits(new Rectangle(new Point(), trueColorBitmap.Size), ImageLockMode.ReadOnly, trueColorBitmap.PixelFormat);
+            Octree<List<SKColor>> colors = new Octree<List<SKColor>>(5, 5);
             int* pointer = (int*)bmpData.Scan0.ToPointer();
             for (int y = 0; y < bitmap.Height; y++)
             {

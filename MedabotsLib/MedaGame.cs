@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GBALib;
+﻿using GBALib;
 
 namespace MedabotsLib
 {
@@ -19,14 +14,14 @@ namespace MedabotsLib
         public static MedaGame Load(string filename)
         {
             Game game = Game.Load(filename);
-            GameData.LoadAll(game);
+            AllData.LoadAll(game);
             return new MedaGame(game);
         }
 
         public void Save(string filename)
         {
             DataWriter writer = new DataWriter(0x800000);
-            writer.Write(game, GameData.Data);
+            
             game.Save(filename);
         }
     }

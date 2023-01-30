@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
+using MedabotsLib.Utils;
 
-namespace MedabotsLib.Data
+namespace MedabotsLib.GameData.Raw
 {
-
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Battle : IByteable
     {

@@ -1,11 +1,7 @@
 ﻿using GBALib;
-using MedabotsLib.Data;
-using System;
-using System.Collections;
+using MedabotsLib.GameData;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MedabotsLib
 {

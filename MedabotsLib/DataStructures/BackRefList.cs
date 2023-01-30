@@ -5,9 +5,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MedabotsLib.Utils;
 
-namespace MedabotsLib
+namespace MedabotsLib.DataStructures
 {
+    /// <summary>
+    /// A list of binary structs that refer to specific offsets in the ROM
+    /// </summary>
     public abstract class BackRefList<T> : TrackingList<T> where T : IByteable
     {
 

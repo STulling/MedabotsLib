@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MedabotsLib.Utils;
 
-namespace MedabotsLib.Data
+namespace MedabotsLib.GameData
 {
+    /// <summary>
+    /// A class that represents a string of text or conversation in the ROM
+    /// This message can contain multiple lines and textboxes
+    /// It can be encoded between the game's encoding and a human readable format
+    /// </summary>
     public class Text : IByteable, ICanGetDirty
     {
 
@@ -15,6 +19,10 @@ namespace MedabotsLib.Data
         byte[] encodedCopy;
         private bool isDirty = false;
 
+        /// <summary>
+        /// A Text object created from a string in the 'human readable' format
+        /// </summary>
+        /// <param name="text">The string to be encoded</param>
         public Text(string text)
         {
             this.decoded = text;
@@ -23,6 +31,10 @@ namespace MedabotsLib.Data
             initCopies();
         }
 
+        /// <summary>
+        /// A Text object created from a byte array in the game's encoding
+        /// </summary>
+        /// <param name="data">The byte array to be decoded</param>
         public Text(byte[] data)
         {
             this.encoded = data;
@@ -31,6 +43,9 @@ namespace MedabotsLib.Data
             initCopies();
         }
 
+        /// <summary>
+        /// Here we create some copies to help us track changes
+        /// </summary>
         private void initCopies()
         {
             this.decodedCopy = new string(decoded);
@@ -50,6 +65,10 @@ namespace MedabotsLib.Data
             }
         }
 
+        /// <summary>
+        /// Sets the text to the given byte array
+        /// </summary>
+        /// <param name="text">The byte array to be encoded in the game's format</param>
         public void Set(byte[] encodedData)
         {
             this.encoded = encodedData;
@@ -57,6 +76,10 @@ namespace MedabotsLib.Data
             this.isDirty = true;
         }
 
+        /// <summary>
+        /// Sets the text to the given string
+        /// </summary>
+        /// <param name="text">The string to be encoded in the human readable format</param>
         public void Set(string decodedData)
         {
             this.decoded = decodedData;
@@ -78,6 +101,10 @@ namespace MedabotsLib.Data
             '"', '(', ')', '♥', '£', '&', '%'
         };
 
+        /// <summary>
+        /// Encodes a string to the human readable format from the game's encoding
+        /// </summary>
+        /// <param name="text">The game's encoding</param>
         private static string Decode(byte[] data)
         {
             string result = "";
@@ -136,6 +163,10 @@ namespace MedabotsLib.Data
             return new string(input.Where(c => char.IsDigit(c)).ToArray());
         }
 
+        /// <summary>
+        /// Encodes a string to the game's encoding from the human readable format
+        /// </summary>
+        /// <param name="text">The human readable format</param>
         private static byte[] Encode(string data)
         {
             List<byte> result = new List<byte>();
@@ -217,6 +248,11 @@ namespace MedabotsLib.Data
             {
                 return base.Equals(other);
             }
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
 
         public byte[] ToBytes()

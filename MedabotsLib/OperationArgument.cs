@@ -28,7 +28,7 @@ namespace MedabotsLib
                     return value;
                 case "medal":
                     value = file[offset];
-                    return GameData.MedalNames[file[offset]];
+                    return AllData.MedalNames[file[offset]];
                 case "direction":
                     value = file[offset];
                     switch (file[offset])
@@ -60,7 +60,7 @@ namespace MedabotsLib
                             return "?";
                     }
                 case "bot":
-                    return GameData.BotNames[file[offset]];
+                    return AllData.BotNames[file[offset]];
                 case "move":
                     if (file[offset] == 0xFF) return "-";
                     string direction = "";

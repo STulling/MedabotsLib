@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
+using MedabotsLib.Utils;
 
-namespace MedabotsLib.Data
+namespace MedabotsLib.GameData.Raw
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Encounters : IByteable
