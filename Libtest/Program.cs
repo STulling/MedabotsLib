@@ -11,12 +11,10 @@ namespace Libtest
     {
         static void Main(string[] args)
         {
-            /*
             MedaGame game = MedaGame.Load("game.gba");
             AllData.MedalNames[0].Str = "Cool Medal";
             AllData.MedalNames[AllData.MedalNames.IndexOf("BAT")].Str = "OBAMA";
             game.Save("out.gba");
-            */
             
         }
     }
