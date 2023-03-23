@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using GBALib;
+using GBALib.ImageProcessing;
 using MedabotsLib;
-using MedabotsLib.Data;
+using SkiaSharp;
 
 namespace Libtest
 {
@@ -11,11 +12,17 @@ namespace Libtest
     {
         static void Main(string[] args)
         {
-            MedaGame game = MedaGame.Load("game.gba");
-            AllData.MedalNames[0].Str = "Cool Medal";
-            AllData.MedalNames[AllData.MedalNames.IndexOf("BAT")].Str = "OBAMA";
-            game.Save("out.gba");
-            
+            // Load image from file using Skiasharp
+            SKBitmap bitmap = SKBitmap.Decode("test.png");
+            Dictionary<string, SKBitmap> results = Pixelizer.All_Combinations(bitmap, 16);
+            // create out folder
+            Directory.CreateDirectory("out");
+            foreach (KeyValuePair<string, SKBitmap> result in results)
+            {
+                FileStream outfile = File.Create("out/" + result.Key + ".png");
+                result.Value.Encode(SKEncodedImageFormat.Png, 100).SaveTo(outfile);
+                outfile.Close();
+            }
         }
     }
 }

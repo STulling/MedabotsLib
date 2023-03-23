@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
+using SkiaSharp;
 
 namespace MedabotsLib
 {
@@ -49,10 +49,10 @@ namespace MedabotsLib
             return result;
         }
 
-        public static Bitmap GetPictureFromData(int w, int h, byte[] data, byte[] palette)
+        public static SKBitmap GetPictureFromData(int w, int h, byte[] data, byte[] palette)
         {
-            Bitmap pic = new Bitmap(w * 8, h * 8, PixelFormat.Format24bppRgb);
-            Color c;
+            SKBitmap pic = new SKBitmap(w * 8, h * 8);
+            SKColor c;
 
             List<byte[]> tiles = getTiles(data, 0x40);
             for (int y = 0; y < h; y++)
@@ -64,7 +64,7 @@ namespace MedabotsLib
                     {
                         short color_byte = (short)((palette[tile[i] * 2]) + (palette[tile[i] * 2 + 1] << 8));
                         byte[] color_bytes = getColors(color_byte);
-                        c = Color.FromArgb(color_bytes[0], color_bytes[1], color_bytes[2]);
+                        c = new SKColor(color_bytes[0], color_bytes[1], color_bytes[2]);
                         pic.SetPixel(i % 8 + x * 8, i / 8 + y * 8, c);
                     }
                 }

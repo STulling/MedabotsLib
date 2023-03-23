@@ -352,6 +352,7 @@ namespace GBALib
                    (coordinate.X / tileDimension) * (tileDimension * tileDimension) +
                    (coordinate.Y / tileDimension) * (tileDimension * width)));
         }
+        /*
 
         static public (byte[], byte[]) ConvertToGBA(SKBitmap image, GraphicsMode mode)
         {
@@ -397,5 +398,6 @@ namespace GBALib
 
             return result;
         }
+        */
     }
 }
